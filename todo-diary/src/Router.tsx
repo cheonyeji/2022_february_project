@@ -1,12 +1,18 @@
-import { BrowserRouter, Route } from "react-router-dom";
-import Todo from "./routes/Todo";
+import { BrowserRouter, Route, Switch } from "react-router-dom";
+import Diary from "./routes/Diary";
+import ToDos from "./routes/ToDos";
 
 function Router() {
   return (
     <BrowserRouter>
-      <Route path="/">
-        <Todo />
-      </Route>
+      <Switch>
+        <Route path="/diary">
+          <Diary />
+        </Route>
+        <Route path="/">
+          <ToDos />
+        </Route>
+      </Switch>
     </BrowserRouter>
   );
 }
