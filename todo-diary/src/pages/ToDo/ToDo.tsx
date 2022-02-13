@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import styled from "styled-components";
 import { categoryState, IToDo, Statuses, toDoState } from "../../atoms";
@@ -12,15 +12,26 @@ import {
   ItemProps,
 } from "react-contexify";
 import "react-contexify/dist/ReactContexify.css";
+import { MdDeleteForever, MdModeEdit } from "react-icons/md";
+import { useForm } from "react-hook-form";
 
 const ToDoLi = styled.li`
   background-color: ${(props) => props.theme.listItemColor};
-  padding: 20px;
-  margin-bottom: 10px;
-  border-radius: 15px;
+  padding: 10px;
+  margin: 10px 0px;
+  border-radius: 5px;
   color: ${(props) => props.theme.bgColor};
   display: flex;
   align-items: center; // 체크박스와 할일 아이템 중앙정렬
+  span {
+    flex: 1;
+  }
+`;
+
+const EditBtn = styled.button`
+  background-color: transparent;
+  border: none;
+  margin-right: 3px;
 `;
 
 const DeleteBtn = styled.button`
@@ -28,11 +39,28 @@ const DeleteBtn = styled.button`
   border: none;
 `;
 
+const Input = styled.input`
+  background-color: transparent;
+  border: none;
+  border-bottom: 1px solid whitesmoke;
+  :focus {
+    outline: none;
+  }
+  padding: 5px 5px;
+  color: white;
+`;
+
 const MENU_ID = "SET_PROPERTY";
 // Defined just for documentation purpose
 type ItemData = any;
 
+interface IForm {
+  toDo: string;
+}
+
 function ToDo({ id, title, status, category }: IToDo) {
+  const [edited, setEdited] = useState(false); // 수정모드인지 확인
+  const { register, handleSubmit, setValue } = useForm<IForm>();
   const setToDos = useSetRecoilState(toDoState);
   const categories = useRecoilValue(categoryState);
   const onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -117,6 +145,26 @@ function ToDo({ id, title, status, category }: IToDo) {
       ];
     });
   };
+
+  const onClickEditBtn = () => {
+    setEdited(true);
+  };
+
+  const handleValid = ({ toDo }: IForm) => {
+    if (toDo.length !== 0) {
+      setToDos((oldToDos) => {
+        const targetIndex = oldToDos.findIndex((toDo) => toDo.id === id);
+        return [
+          ...oldToDos.slice(0, targetIndex),
+          { title: toDo, id, status, category },
+          ...oldToDos.slice(targetIndex + 1),
+        ];
+      });
+    }
+    setValue("toDo", "");
+    setEdited(false);
+  };
+
   return (
     <ToDoLi onContextMenu={show}>
       <input
@@ -125,10 +173,26 @@ function ToDo({ id, title, status, category }: IToDo) {
         value={status}
         onChange={onChange}
       />
-      <span>
-        {title} (프로젝트 : {category})
-      </span>
-      <DeleteBtn onClick={handleDelete}>❌</DeleteBtn>
+
+      {edited ? (
+        <form onSubmit={handleSubmit(handleValid)}>
+          <Input autoComplete="off" {...register("toDo")} />
+        </form>
+      ) : (
+        <span>
+          {title} (프로젝트 : {category})
+        </span>
+      )}
+      {edited ? null : (
+        <>
+          <EditBtn onClick={onClickEditBtn}>
+            <MdModeEdit size={20} />
+          </EditBtn>
+          <DeleteBtn onClick={handleDelete}>
+            <MdDeleteForever size={20} />
+          </DeleteBtn>
+        </>
+      )}
 
       <Menu id={MENU_ID}>
         <Item onClick={handleItemClick} id={Statuses.DOING}>
