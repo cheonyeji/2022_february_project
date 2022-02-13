@@ -13,9 +13,14 @@ export interface IToDo {
   category: string;
 }
 
-export const statusState = atom<Statuses>({
+interface IClickedTab {
+  status: Statuses;
+  category: string;
+}
+
+export const clickedTabState = atom<IClickedTab>({
   key: "status",
-  default: Statuses.DOING,
+  default: { status: Statuses.DOING, category: "" },
 });
 
 export const selectedCategoryState = atom<string>({
@@ -32,8 +37,15 @@ export const toDoSelector = selector({
   key: "toDoSelector",
   get: ({ get }) => {
     const toDos = get(toDoState);
-    const status = get(statusState);
-    return toDos.filter((toDo) => toDo.status === status);
+    const { status, category } = get(clickedTabState);
+    // status 클릭, 모든 category 다 보여주기
+    if (category === "") {
+      return toDos.filter((toDo) => toDo.status === status);
+    }
+    // cateogory 클릭, status 상관없이 보여주기
+    else {
+      return toDos.filter((toDo) => toDo.category === category);
+    }
   },
 });
 
