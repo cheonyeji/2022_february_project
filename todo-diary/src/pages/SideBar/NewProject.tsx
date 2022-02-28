@@ -1,10 +1,10 @@
 import { useForm } from "react-hook-form";
 import { useSetRecoilState } from "recoil";
 import styled from "styled-components";
-import { categoryState } from "../../atoms";
+import { projectState } from "../../atoms";
 
 interface IForm {
-  category: string;
+  project: string;
 }
 
 const Input = styled.input`
@@ -17,21 +17,21 @@ const Input = styled.input`
   }
 `;
 
-function NewCategory() {
+function NewProject() {
   const { register, handleSubmit, setValue } = useForm<IForm>();
-  const setCategory = useSetRecoilState(categoryState);
-  const handleValid = ({ category }: IForm) => {
-    setCategory((prevCategories) => [
-      { text: category, id: Date.now() },
-      ...prevCategories,
+  const setProjects = useSetRecoilState(projectState);
+  const handleValid = ({ project }: IForm) => {
+    setProjects((prevProjects) => [
+      { text: project, id: Date.now() },
+      ...prevProjects,
     ]);
-    setValue("category", "");
+    setValue("project", "");
   };
   return (
     <form onSubmit={handleSubmit(handleValid)}>
       <Input
         autoComplete="off"
-        {...register("category", {
+        {...register("project", {
           required: "프로젝트 이름을 입력해주세요",
         })}
         placeholder="프로젝트 추가"
@@ -40,4 +40,4 @@ function NewCategory() {
   );
 }
 
-export default NewCategory;
+export default NewProject;

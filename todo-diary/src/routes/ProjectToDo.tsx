@@ -2,7 +2,7 @@ import { Helmet } from "react-helmet";
 import { useParams } from "react-router-dom";
 import { useRecoilValue } from "recoil";
 import styled from "styled-components";
-import { clickedTabState, toDoSelector } from "../atoms";
+import { projectSelectorById, toDoSelector } from "../atoms";
 import SideBar from "../pages/SideBar/SideBar";
 import NewToDo from "../pages/ToDo/NewToDo";
 import ToDo from "../pages/ToDo/ToDo";
@@ -38,6 +38,7 @@ interface RouteParams {
 function ProjectToDo() {
   const toDos = useRecoilValue(toDoSelector);
   const { projectId } = useParams<RouteParams>();
+  const projectName = useRecoilValue(projectSelectorById(projectId));
   return (
     <Container>
       <Helmet>
@@ -46,7 +47,7 @@ function ProjectToDo() {
       <SideBar />
       <ToDoWrapper>
         <Header>
-          <Title>{projectId}</Title>
+          <Title>{projectName}</Title>
         </Header>
         <TodoOl>
           {toDos.map((toDo) => (

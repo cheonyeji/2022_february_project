@@ -1,6 +1,11 @@
 import { Helmet } from "react-helmet";
 import { useRecoilValue } from "recoil";
-import { clickedTabState, Statuses, toDoSelector } from "../atoms";
+import {
+  projectState,
+  clickedTabState,
+  Statuses,
+  toDoSelector,
+} from "../atoms";
 import styled from "styled-components";
 import NewToDo from "../pages/ToDo/NewToDo";
 import ToDo from "../pages/ToDo/ToDo";
@@ -28,6 +33,9 @@ const Title = styled.h1`
   color: ${(props) => props.theme.accentColor};
 `;
 
+const ProjectText = styled.h2`
+  margin: 10px 0;
+`;
 const TodoOl = styled.ol``;
 
 let today_date = new Date();
@@ -42,9 +50,9 @@ function ToDos() {
     title = "추후";
   } else if (clickedTab.status === Statuses.DONE) {
     title = "완료";
-  } else {
-    title = clickedTab.category;
   }
+
+  const projects = useRecoilValue(projectState);
   return (
     <Container>
       <Helmet>
@@ -55,11 +63,25 @@ function ToDos() {
         <Header>
           <Title>{title}</Title>
         </Header>
-        <TodoOl>
-          {toDos.map((toDo) => (
-            <ToDo key={toDo.id} {...toDo} />
-          ))}
-        </TodoOl>
+        {projects.map((project) => {
+          const subToDos = toDos.filter(
+            (todo) => todo.projectId === project.id
+          );
+          if (subToDos.length !== 0) {
+            return (
+              <>
+                <ProjectText>{project.text}</ProjectText>
+                <TodoOl>
+                  {subToDos.map((toDo) => (
+                    <ToDo key={toDo.id} {...toDo} />
+                  ))}
+                </TodoOl>
+              </>
+            );
+          } else {
+            return null;
+          }
+        })}
         <NewToDo />
       </ToDoWrapper>
     </Container>

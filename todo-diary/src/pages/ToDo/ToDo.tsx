@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import styled from "styled-components";
-import { categoryState, IToDo, Statuses, toDoState } from "../../atoms";
+import { projectState, IToDo, Statuses, toDoState } from "../../atoms";
 import {
   Menu,
   Item,
@@ -14,6 +14,8 @@ import {
 import "react-contexify/dist/ReactContexify.css";
 import { MdDeleteForever, MdModeEdit } from "react-icons/md";
 import { useForm } from "react-hook-form";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 const ToDoLi = styled.li`
   background-color: ${(props) => props.theme.listItemColor};
@@ -50,7 +52,6 @@ const Input = styled.input`
   color: white;
 `;
 
-const MENU_ID = "SET_PROPERTY";
 // Defined just for documentation purpose
 type ItemData = any;
 
@@ -58,11 +59,13 @@ interface IForm {
   toDo: string;
 }
 
-function ToDo({ id, title, status, category }: IToDo) {
+function ToDo({ id, title, done, deadline, projectId }: IToDo) {
+  const MENU_ID = `SET_PROPERTY_${id}`;
   const [edited, setEdited] = useState(false); // 수정모드인지 확인
   const { register, handleSubmit, setValue } = useForm<IForm>();
   const setToDos = useSetRecoilState(toDoState);
-  const categories = useRecoilValue(categoryState);
+  const projects = useRecoilValue(projectState);
+
   const onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { checked } = event.target;
     // 안한거로 변경
@@ -71,7 +74,7 @@ function ToDo({ id, title, status, category }: IToDo) {
         const targetIndex = oldToDos.findIndex((toDo) => toDo.id === id);
         const finalToDos = [
           ...oldToDos.slice(0, targetIndex),
-          { title, id, status: Statuses.DOING, category },
+          { title, id, projectId, deadline, done: false },
           ...oldToDos.slice(targetIndex + 1),
         ];
         return finalToDos;
@@ -81,7 +84,7 @@ function ToDo({ id, title, status, category }: IToDo) {
         const targetIndex = oldToDos.findIndex((toDo) => toDo.id === id);
         const finalToDos = [
           ...oldToDos.slice(0, targetIndex),
-          { title, id, status: Statuses.DONE, category },
+          { title, id, projectId, deadline, done: true },
           ...oldToDos.slice(targetIndex + 1),
         ];
         return finalToDos;
@@ -100,47 +103,30 @@ function ToDo({ id, title, status, category }: IToDo) {
   };
 
   const { show } = useContextMenu({ id: MENU_ID });
-  const handleItemClick = ({ event }: ItemParams<ItemProps, ItemData>) => {
-    switch (event.currentTarget.id) {
-      case Statuses.TO_DO:
-        setToDos((oldToDos) => {
-          const targetIndex = oldToDos.findIndex((toDo) => toDo.id === id);
-          return [
-            ...oldToDos.slice(0, targetIndex),
-            { title, id, status: Statuses.TO_DO, category },
-            ...oldToDos.slice(targetIndex + 1),
-          ];
-        });
-        break;
-      case Statuses.DOING:
-        setToDos((oldToDos) => {
-          const targetIndex = oldToDos.findIndex((toDo) => toDo.id === id);
-          return [
-            ...oldToDos.slice(0, targetIndex),
-            { title, id, status: Statuses.DOING, category },
-            ...oldToDos.slice(targetIndex + 1),
-          ];
-        });
-        break;
-      case Statuses.DONE:
-        setToDos((oldToDos) => {
-          const targetIndex = oldToDos.findIndex((toDo) => toDo.id === id);
-          return [
-            ...oldToDos.slice(0, targetIndex),
-            { title, id, status: Statuses.DONE, category },
-            ...oldToDos.slice(targetIndex + 1),
-          ];
-        });
-        break;
-    }
-  };
-
-  const handleCategoryClick = ({ event }: ItemParams<ItemProps, ItemData>) => {
+  const handleItemClick = () => {
+    const today = new Date();
     setToDos((oldToDos) => {
       const targetIndex = oldToDos.findIndex((toDo) => toDo.id === id);
       return [
         ...oldToDos.slice(0, targetIndex),
-        { title, id, status, category: event.currentTarget.innerText },
+        { title, id, deadline: today, done, projectId },
+        ...oldToDos.slice(targetIndex + 1),
+      ];
+    });
+  };
+
+  const handleProjectClick = ({ data }: ItemParams<ItemProps, ItemData>) => {
+    setToDos((oldToDos) => {
+      const targetIndex = oldToDos.findIndex((toDo) => toDo.id === id);
+      return [
+        ...oldToDos.slice(0, targetIndex),
+        {
+          title,
+          id,
+          deadline,
+          done,
+          projectId: Number(data),
+        },
         ...oldToDos.slice(targetIndex + 1),
       ];
     });
@@ -156,7 +142,7 @@ function ToDo({ id, title, status, category }: IToDo) {
         const targetIndex = oldToDos.findIndex((toDo) => toDo.id === id);
         return [
           ...oldToDos.slice(0, targetIndex),
-          { title: toDo, id, status, category },
+          { title: toDo, id, deadline, done, projectId },
           ...oldToDos.slice(targetIndex + 1),
         ];
       });
@@ -165,12 +151,24 @@ function ToDo({ id, title, status, category }: IToDo) {
     setEdited(false);
   };
 
+  const [startDate, setStartDate] = useState(new Date());
+  const handleDateClick = (date: any) => {
+    setToDos((oldToDos) => {
+      const targetIndex = oldToDos.findIndex((toDo) => toDo.id === id);
+      return [
+        ...oldToDos.slice(0, targetIndex),
+        { title, id, deadline: date, done, projectId },
+        ...oldToDos.slice(targetIndex + 1),
+      ];
+    });
+    setStartDate(date as any);
+  };
   return (
     <ToDoLi onContextMenu={show}>
       <input
         type="checkbox"
-        checked={status !== Statuses.DONE ? false : true}
-        value={status}
+        checked={done}
+        // value={done}
         onChange={onChange}
       />
 
@@ -180,7 +178,7 @@ function ToDo({ id, title, status, category }: IToDo) {
         </form>
       ) : (
         <span>
-          {title} (프로젝트 : {category})
+          {title} {deadline?.toDateString()}
         </span>
       )}
       {edited ? null : (
@@ -198,16 +196,24 @@ function ToDo({ id, title, status, category }: IToDo) {
         <Item onClick={handleItemClick} id={Statuses.DOING}>
           기한: 오늘
         </Item>
-        <Item onClick={handleItemClick} id={Statuses.TO_DO}>
-          기한: 추후
-        </Item>
-        <Item onClick={handleItemClick} id={Statuses.DONE}>
-          기한: 완료
-        </Item>
+        <Submenu label="기한 설정">
+          <Item id="SELECT_DATE">
+            <DatePicker
+              selected={startDate}
+              onChange={(date) => handleDateClick(date)}
+              minDate={new Date()}
+              inline
+            />
+          </Item>
+        </Submenu>
         <Separator />
         <Submenu label="프로젝트">
-          {categories.map((category) => (
-            <Item onClick={handleCategoryClick} id={`${category.id}`}>
+          {projects.map((category) => (
+            <Item
+              onClick={handleProjectClick}
+              data={`${category.id}`}
+              id={`${category.id}`}
+            >
               {category.text}
             </Item>
           ))}

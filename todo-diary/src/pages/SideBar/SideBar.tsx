@@ -1,22 +1,25 @@
 import { Link, useRouteMatch } from "react-router-dom";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import styled from "styled-components";
-import { categoryState, clickedTabState, Statuses } from "../../atoms";
-import Category from "./Category";
-import NewCategory from "./NewCategory";
 import {
   MdWbSunny,
   MdWbTwighlight,
   MdCalendarToday,
   MdDoneAll,
 } from "react-icons/md";
+import Project from "./Project";
+import NewProject from "./NewProject";
+import { projectState, clickedTabState, Statuses } from "../../atoms";
+
 const SideBarWrapper = styled.div`
   padding: 10px 0;
   grid-column: 1/2;
   display: flex;
   flex-direction: column;
 `;
+
 const SideBarTabs = styled.ol``;
+
 const SideBarTab = styled.li`
   display: flex;
   align-items: center;
@@ -25,7 +28,9 @@ const SideBarTab = styled.li`
     margin-left: 3px;
   }
 `;
-const CategoryOl = styled.ol``;
+
+const ProjectOl = styled.ol``;
+
 const StatusBtn = styled.button<{ isActive?: boolean }>`
   height: 100%;
   width: 100%;
@@ -33,12 +38,12 @@ const StatusBtn = styled.button<{ isActive?: boolean }>`
   border: none;
   cursor: pointer;
   text-align: left;
-
   margin-bottom: 20px;
   background-color: transparent;
   color: ${(props) =>
     props.isActive ? props.theme.accentColor : props.theme.textColor};
 `;
+
 function SideBar() {
   const to_doMatch = useRouteMatch(`/status/${Statuses.TO_DO.toLowerCase()}`);
   const doingMatch = useRouteMatch(`/status/${Statuses.DOING.toLowerCase()}`);
@@ -50,9 +55,9 @@ function SideBar() {
     const {
       currentTarget: { name },
     } = event;
-    setClickedTab({ category: "", status: name as any });
+    setClickedTab({ projectId: 0, status: name as any });
   };
-  const categories = useRecoilValue(categoryState);
+  const categories = useRecoilValue(projectState);
   return (
     <SideBarWrapper>
       <SideBarTabs>
@@ -60,7 +65,7 @@ function SideBar() {
           <Link to="/diary">
             <StatusBtn>
               <MdCalendarToday />
-              <span>캘린더</span>
+              <span>다이어리</span>
             </StatusBtn>
           </Link>
         </SideBarTab>
@@ -101,12 +106,12 @@ function SideBar() {
           </Link>
         </SideBarTab>
         <hr />
-        <CategoryOl>
+        <ProjectOl>
           {categories.map((category) => (
-            <Category key={category.id} {...category} />
+            <Project key={category.id} {...category} />
           ))}
-        </CategoryOl>
-        <NewCategory />
+        </ProjectOl>
+        <NewProject />
       </SideBarTabs>
     </SideBarWrapper>
   );
